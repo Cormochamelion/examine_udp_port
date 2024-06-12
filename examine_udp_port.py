@@ -15,8 +15,16 @@ combs = map(
 
 nc = nclib.Netcat(connect=(host, int(port)), echo_hex=True, udp=True, verbose=True)
 
-for comb in combs:
-    pad_char = b"\x00"
-    payload = (pad_char * 2) + comb + (pad_char * 7) + b"\x0a"
-    nc.send(payload)
-    # reply = nc.recv(16, timeout=2)
+output_file = "./examine_udp.txt"
+request_pad_char = b"\x00"
+payload_pad_char = b"\xfe"
+response_pad_char = b"\xff"
+
+with open(output_file, "wb") as out_con:
+    for comb in combs:
+        payload = (request_pad_char * 2) + comb + (request_pad_char * 7) + b"\x0a"
+        nc.send(payload)
+        # pad to 16 byte length for nicer presentation
+        out_con.write(payload + (payload_pad_char * 4))
+        recieved = nc.recv(12, timeout=2)
+        out_con.write(recieved + (response_pad_char * 4))
